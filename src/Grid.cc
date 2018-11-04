@@ -122,3 +122,7 @@ uint32_t Grid::getWidth() const {
 uint32_t Grid::getHeight() const {
   return _height;
 }
+
+bool Grid::isTorus() const {
+  return _torus;
+}

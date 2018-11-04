@@ -1,3 +1,4 @@
 obj/
 celtex
-celtex.exe
+*.exe
+*.dll

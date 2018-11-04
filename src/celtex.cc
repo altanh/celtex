@@ -8,8 +8,14 @@
 #include "Updater.h"
 #include "Pattern.h"
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
+const int WIDTH = 1280;
+const int HEIGHT = 960;
+
+const int AUT_WIDTH = 1280;
+const int AUT_HEIGHT = AUT_WIDTH * ((float) HEIGHT / WIDTH);
+
+const int AUT_DELTA_X = WIDTH / AUT_WIDTH;
+const int AUT_DELTA_Y = HEIGHT / AUT_HEIGHT;
 
 int main(int argc, char **argv) {
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -50,7 +56,7 @@ int main(int argc, char **argv) {
     { false }, {  true }, { false }
   });
 
-  aut.putPattern(WIDTH / 2, HEIGHT / 2, pentomino);
+  aut.putPattern(AUT_WIDTH / 2, AUT_HEIGHT / 2, pentomino);
 
   SDL_Event e;
   bool running = true;
@@ -74,8 +80,10 @@ int main(int argc, char **argv) {
       for (size_t x = 0; x < g.getWidth(); ++x) {
         bool alive = g.getCell(x, y).state;
 
+        SDL_Rect cell_rect = {x * AUT_DELTA_X, y * AUT_DELTA_Y, AUT_DELTA_X, AUT_DELTA_Y};
+
         SDL_SetRenderDrawColor(ren, alive ? 255 : 0, 0, 0, 255);
-        SDL_RenderDrawPoint(ren, x, y);
+        SDL_RenderFillRect(ren, &cell_rect);
       }
     }
 

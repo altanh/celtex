@@ -28,6 +28,7 @@ class Grid {
 
   uint32_t getWidth() const;
   uint32_t getHeight() const;
+  bool isTorus() const;
 
  private:
   Cell *_cells;

@@ -13,8 +13,8 @@ uint8_t GOL::_aliveCount(std::vector<const Cell*> adj) {
 }
 
 void GOL::update(Grid *grid) {
-  // make a copy of grid, make changes there, then replace the origin grid
-  Grid copy = *grid;
+  // make a fresh grid, make changes there, then replace the original grid
+  Grid fresh(grid->getWidth(), grid->getHeight(), grid->isTorus());
 
   for (size_t y = 0; y < grid->getHeight(); ++y) {
     for (size_t x = 0; x < grid->getWidth(); ++x) {
@@ -24,11 +24,11 @@ void GOL::update(Grid *grid) {
           ((alive_count == 2) || (alive_count == 3)) :
           (alive_count == 3);
 
-      copy.setCell(x, y, { alive });
+      fresh.setCell(x, y, { alive });
     }
   }
 
-  *grid = std::move(copy);
+  *grid = std::move(fresh);
 }
 
 double StochasticGOL::_aliveProbability(const Cell &c, uint8_t alive_count) {
@@ -52,7 +52,7 @@ double StochasticGOL::_aliveProbability(const Cell &c, uint8_t alive_count) {
 }
 
 void StochasticGOL::update(Grid *grid) {
-  Grid copy = *grid;
+  Grid fresh(grid->getWidth(), grid->getHeight(), grid->isTorus());
 
   for (size_t y = 0; y < grid->getHeight(); ++y) {
     for (size_t x = 0; x < grid->getWidth(); ++x) {
@@ -62,9 +62,9 @@ void StochasticGOL::update(Grid *grid) {
 
       bool alive = p <= _aliveProbability(grid->getCell(x, y), alive_count);
 
-      copy.setCell(x, y, { alive });
+      fresh.setCell(x, y, { alive });
     }
   }
 
-  *grid = std::move(copy);
+  *grid = std::move(fresh);
 }
