@@ -3,6 +3,11 @@
 
 #include "Grid.h"
 
+// from a comment by Christ Nolet on stackoverflow; assume b > 0
+static inline _mod(int64_t a, int64_t b) {
+  return (a < 0) ? (a % b + b) : (a % b);
+}
+
 Grid::Grid() : _cells(nullptr), _width(0), _height(0), _torus(false) {}
 
 Grid::Grid(uint32_t width, uint32_t height, bool torus)
@@ -48,6 +53,9 @@ Grid &Grid::operator=(Grid &&other) {
   if (this == &other)
     return *this;
 
+  if (_cells)
+    delete[] _cells;
+
   _cells = other._cells;
   _width = other._width;
   _height = other._height;
@@ -86,29 +94,43 @@ std::vector<const Cell*> Grid::getAdjacent(int32_t x, int32_t y) const {
   std::vector<const Cell*> adj(8);
 
   // most definitely can be optimized by expanding, but too lazy right now
-  adj[0] = inBounds(x - 1, y - 1) ? &_cells[getCanonical(x - 1, y - 1)] : nullptr;
-  adj[1] = inBounds(    x, y - 1) ? &_cells[getCanonical(    x, y - 1)] : nullptr;
-  adj[2] = inBounds(x + 1, y - 1) ? &_cells[getCanonical(x + 1, y - 1)] : nullptr;
-  adj[3] = inBounds(x - 1,     y) ? &_cells[getCanonical(x - 1,     y)] : nullptr;
-  adj[4] = inBounds(x + 1,     y) ? &_cells[getCanonical(x + 1,     y)] : nullptr;
-  adj[5] = inBounds(x - 1, y + 1) ? &_cells[getCanonical(x - 1, y + 1)] : nullptr;
-  adj[6] = inBounds(    x, y + 1) ? &_cells[getCanonical(    x, y + 1)] : nullptr;
-  adj[7] = inBounds(x + 1, y + 1) ? &_cells[getCanonical(x + 1, y + 1)] : nullptr;
+  adj[0] = inBounds(x - 1, y - 1) ? &_cells[_edgeWrap(x - 1, y - 1)] : nullptr;
+  adj[1] = inBounds(    x, y - 1) ? &_cells[_edgeWrap(    x, y - 1)] : nullptr;
+  adj[2] = inBounds(x + 1, y - 1) ? &_cells[_edgeWrap(x + 1, y - 1)] : nullptr;
+  adj[3] = inBounds(x - 1,     y) ? &_cells[_edgeWrap(x - 1,     y)] : nullptr;
+  adj[4] = inBounds(x + 1,     y) ? &_cells[_edgeWrap(x + 1,     y)] : nullptr;
+  adj[5] = inBounds(x - 1, y + 1) ? &_cells[_edgeWrap(x - 1, y + 1)] : nullptr;
+  adj[6] = inBounds(    x, y + 1) ? &_cells[_edgeWrap(    x, y + 1)] : nullptr;
+  adj[7] = inBounds(x + 1, y + 1) ? &_cells[_edgeWrap(x + 1, y + 1)] : nullptr;
 
   return adj;
+}
+
+inline uint32_t Grid::_edgeWrap(int32_t x, int32_t y) const {
+  if (x == -1)
+    x = _width - 1;
+  else if (x == (int64_t) _width)
+    x = 0;
+
+  if (y == -1)
+    y = _height - 1;
+  else if (y == (int64_t) _height)
+    y = 0;
+
+  return y * _width + x;
 }
 
 void Grid::setCell(int32_t x, int32_t y, const Cell &c) {
   _cells[getCanonical(x, y)] = c;
 }
 
-uint32_t Grid::getCanonical(int32_t x, int32_t y) const {
+inline uint32_t Grid::getCanonical(int32_t x, int32_t y) const {
   if (!_torus)
     return y * _width + x;
 
   // x' = x mod _width
   // y' = y mod _height
-  return (y % _height) * _width + (x % _width);
+  return _mod(y, _height) * _width + _mod(x, _width);
 }
 
 bool Grid::inBounds(int32_t x, int32_t y) const {

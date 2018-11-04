@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cstdlib>
 #include <memory>
+#include <chrono>
+#include <vector>
+
 #include <SDL.h>
 
 #include "Grid.h"
@@ -8,14 +11,14 @@
 #include "Updater.h"
 #include "Pattern.h"
 
-const int WIDTH = 1280;
-const int HEIGHT = 960;
+const int WIDTH = 640;
+const int HEIGHT = 480;
 
-const int AUT_WIDTH = 1280;
-const int AUT_HEIGHT = AUT_WIDTH * ((float) HEIGHT / WIDTH);
+const int AUT_WIDTH = WIDTH;
+const int AUT_HEIGHT = HEIGHT;//AUT_WIDTH * ((float) HEIGHT / WIDTH);
 
-const int AUT_DELTA_X = WIDTH / AUT_WIDTH;
-const int AUT_DELTA_Y = HEIGHT / AUT_HEIGHT;
+const float AUT_DELTA_X = (float) WIDTH / AUT_WIDTH;
+const float AUT_DELTA_Y = (float) HEIGHT / AUT_HEIGHT;
 
 int main(int argc, char **argv) {
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -42,7 +45,12 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  Automaton aut(WIDTH, HEIGHT, true, std::shared_ptr<Updater>(new GOL()));
+  SDL_RendererInfo ri;
+  SDL_GetRendererInfo(ren, &ri);
+
+  std::cout << "using renderer: " << ri.name << std::endl;
+
+  Automaton aut(AUT_WIDTH, AUT_HEIGHT, true, std::shared_ptr<Updater>(new StochasticGOL(8)));
 
   Pattern glider(3, 3, {
     { false }, {  true }, { false },
@@ -62,30 +70,29 @@ int main(int argc, char **argv) {
   bool running = true;
   while (running) {
     while (SDL_PollEvent(&e)) {
-      switch (e.type) {
-        case SDL_QUIT:
-          running = false;
-          break;
-
-        default:
-          break;
+      if (e.type == SDL_QUIT) {
+        running = false;
       }
     }
 
+    SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
     SDL_RenderClear(ren);
 
     const Grid &g = aut.getGrid();
+    std::vector<SDL_Rect> cell_rects;
 
     for (size_t y = 0; y < g.getHeight(); ++y) {
       for (size_t x = 0; x < g.getWidth(); ++x) {
         bool alive = g.getCell(x, y).state;
 
-        SDL_Rect cell_rect = {x * AUT_DELTA_X, y * AUT_DELTA_Y, AUT_DELTA_X, AUT_DELTA_Y};
+        if (alive)
+          cell_rects.push_back({(float) x * AUT_DELTA_X, (float) y * AUT_DELTA_Y, AUT_DELTA_X, AUT_DELTA_Y});
 
-        SDL_SetRenderDrawColor(ren, alive ? 255 : 0, 0, 0, 255);
-        SDL_RenderFillRect(ren, &cell_rect);
       }
     }
+
+    SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
+    SDL_RenderFillRects(ren, cell_rects.data(), cell_rects.size());
 
     SDL_RenderPresent(ren);
 

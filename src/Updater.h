@@ -8,25 +8,39 @@
 #include "Grid.h"
 
 class Updater {
+  size_t _threads;
  public:
-  virtual void update(Grid *grid) = 0;
+  Updater() : _threads(1) {}
+  Updater(size_t threads) : _threads(threads) {}
+
+  virtual void update(Grid *grid);
+  virtual void updateChunk(Grid *grid, Grid *dest,
+      uint32_t x, uint32_t y, uint32_t w, uint32_t h) = 0;
 };
 
 class GOL : public Updater {
  public:
-  virtual void update(Grid *grid);
+  GOL() : Updater() {}
+  GOL(size_t threads) : Updater(threads) {}
+
+  virtual void updateChunk(Grid *grid, Grid *dest,
+      uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 
  protected:
-  uint8_t _aliveCount(std::vector<const Cell*> adj);
+  static uint8_t _aliveCount(std::vector<const Cell*> adj);
 };
 
 class StochasticGOL : public GOL {
  public:
-  virtual void update(Grid *grid);
+  StochasticGOL() : GOL() {}
+  StochasticGOL(size_t threads) : GOL(threads) {}
+
+  virtual void updateChunk(Grid *grid, Grid *dest,
+      uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 
  private:
   std::default_random_engine _rand;
-  virtual double _aliveProbability(const Cell &c, uint8_t alive_count);
+  static double _aliveProbability(const Cell &c, uint8_t alive_count);
 };
 
 #endif

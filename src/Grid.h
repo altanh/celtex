@@ -35,6 +35,8 @@ class Grid {
   uint32_t _width;
   uint32_t _height;
   bool _torus;
+
+  uint32_t _edgeWrap(int32_t x, int32_t y) const;
 };
 
 #endif
