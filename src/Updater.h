@@ -1,46 +1,73 @@
 #ifndef CELTEX_UPDATOR_H
 #define CELTEX_UPDATOR_H
 
-#include <cstdlib>
+#include <cstdint>
 #include <vector>
 #include <random>
 
 #include "Grid.h"
 
 class Updater {
-  size_t _threads;
  public:
   Updater() : _threads(1) {}
   Updater(size_t threads) : _threads(threads) {}
 
-  virtual void update(Grid *grid);
+  virtual void update(Grid *grid, Grid *dest);
   virtual void updateChunk(Grid *grid, Grid *dest,
       uint32_t x, uint32_t y, uint32_t w, uint32_t h) = 0;
+
+ private:
+  size_t _threads;
 };
 
-class GOL : public Updater {
+class GenGOL : public Updater {
  public:
-  GOL() : Updater() {}
-  GOL(size_t threads) : Updater(threads) {}
+  enum RuleFlag {
+    kZero  =   1,
+    kOne   =   2,
+    kTwo   =   4,
+    kThree =   8,
+    kFour  =  16,
+    kFive  =  32,
+    kSix   =  64,
+    kSeven = 128,
+    kEight = 256
+  };
+
+  GenGOL()
+      : Updater(), _B(RuleFlag::kThree ), _S(RuleFlag::kTwo | RuleFlag::kThree) {}
+
+  GenGOL(size_t thr, uint16_t b, uint16_t s)
+      : Updater(thr), _B(b), _S(s) {}
 
   virtual void updateChunk(Grid *grid, Grid *dest,
       uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 
- protected:
+ private:
+  uint16_t _B;
+  uint16_t _S;
+
   static uint8_t _aliveCount(std::vector<const Cell*> adj);
 };
 
-class StochasticGOL : public GOL {
+class StochasticGOL : public Updater {
  public:
-  StochasticGOL() : GOL() {}
-  StochasticGOL(size_t threads) : GOL(threads) {}
+  // default is just standard GOL
+  StochasticGOL() : Updater(), _pB({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0}),
+      _pS({0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0}) {}
+
+  StochasticGOL(size_t threads, std::vector<double> pB, std::vector<double> pS)
+      : Updater(threads), _pB(pB), _pS(pS) {}
 
   virtual void updateChunk(Grid *grid, Grid *dest,
       uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 
  private:
   std::default_random_engine _rand;
-  static double _aliveProbability(const Cell &c, uint8_t alive_count);
+  std::vector<double> _pB;
+  std::vector<double> _pS;
+
+  static uint8_t _aliveCount(std::vector<const Cell*> adj);
 };
 
 #endif

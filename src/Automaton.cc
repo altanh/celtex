@@ -1,7 +1,7 @@
 #include "Automaton.h"
 
 Automaton::Automaton(uint32_t w, uint32_t h, bool torus, std::shared_ptr<Updater> u)
-  : _grid(w, h, torus), _updater(u) {}
+  : _grid(w, h, torus), _dest(w, h, torus), _updater(u), _texture(w, h) {}
 
 const Grid &Automaton::getGrid() const {
   return _grid;
@@ -9,6 +9,10 @@ const Grid &Automaton::getGrid() const {
 
 Grid &Automaton::getGrid() {
   return _grid;
+}
+
+const Texture &Automaton::getTexture() const {
+  return _texture;
 }
 
 void Automaton::putPattern(int32_t x, int32_t y, const Pattern &p) {
@@ -20,5 +24,6 @@ void Automaton::putPattern(int32_t x, int32_t y, const Pattern &p) {
 }
 
 void Automaton::step() {
-  _updater->update(&_grid);
+  _updater->update(&_grid, &_dest);
+  _grid = _dest;
 }

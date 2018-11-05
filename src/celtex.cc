@@ -11,11 +11,11 @@
 #include "Updater.h"
 #include "Pattern.h"
 
-const int WIDTH = 640;
-const int HEIGHT = 480;
+const int WIDTH = 800;
+const int HEIGHT = 800;
 
-const int AUT_WIDTH = WIDTH;
-const int AUT_HEIGHT = HEIGHT;//AUT_WIDTH * ((float) HEIGHT / WIDTH);
+const int AUT_WIDTH = WIDTH / 4;
+const int AUT_HEIGHT = AUT_WIDTH * ((float) HEIGHT / WIDTH);
 
 const float AUT_DELTA_X = (float) WIDTH / AUT_WIDTH;
 const float AUT_DELTA_Y = (float) HEIGHT / AUT_HEIGHT;
@@ -50,7 +50,15 @@ int main(int argc, char **argv) {
 
   std::cout << "using renderer: " << ri.name << std::endl;
 
-  Automaton aut(AUT_WIDTH, AUT_HEIGHT, true, std::shared_ptr<Updater>(new StochasticGOL(8)));
+  std::vector<double> pB = {
+    0.0, 0.01, 0.95, 0.0, 0.0, 0.05, 0.0, 0.0, 0.0
+  };
+
+  std::vector<double> pS = {
+    0.0, 0.88, 1.0, 0.8, 0.2, 0.0625, 0.0, 1.0, 0.0
+  };
+
+  Automaton aut(AUT_WIDTH, AUT_HEIGHT, true, std::shared_ptr<Updater>(new StochasticGOL(8, pB, pS)));
 
   Pattern glider(3, 3, {
     { false }, {  true }, { false },
@@ -64,7 +72,10 @@ int main(int argc, char **argv) {
     { false }, {  true }, { false }
   });
 
-  aut.putPattern(AUT_WIDTH / 2, AUT_HEIGHT / 2, pentomino);
+  Pattern rect(AUT_WIDTH / 4, AUT_HEIGHT / 4, std::vector<Cell>(AUT_WIDTH * AUT_HEIGHT / 16, { true }));
+
+  //aut.putPattern(AUT_WIDTH / 2, AUT_HEIGHT / 2, pentomino);
+  aut.putPattern(AUT_WIDTH / 2 - AUT_WIDTH / 8, AUT_HEIGHT / 2 - AUT_HEIGHT / 8, rect);
 
   SDL_Event e;
   bool running = true;
@@ -87,13 +98,11 @@ int main(int argc, char **argv) {
 
         if (alive)
           cell_rects.push_back({(float) x * AUT_DELTA_X, (float) y * AUT_DELTA_Y, AUT_DELTA_X, AUT_DELTA_Y});
-
       }
     }
 
-    SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);
+    SDL_SetRenderDrawColor(ren, 255, 100, 0, 255);
     SDL_RenderFillRects(ren, cell_rects.data(), cell_rects.size());
-
     SDL_RenderPresent(ren);
 
     aut.step();

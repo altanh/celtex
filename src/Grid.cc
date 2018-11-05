@@ -34,9 +34,21 @@ Grid::~Grid() {
     delete[] _cells;
 }
 
+#include <iostream>
+
 Grid &Grid::operator=(const Grid &other) {
   if (this == &other)
     return *this;
+
+  // special case of same dimensions; no need to make again
+  if (_width == other._width && _height == other._height) {
+    _torus = other._torus;
+
+    for (size_t i = 0; i < _width * _height; ++i)
+      _cells[i] = other._cells[i];
+
+    return *this;
+  }
 
   create(other._width, other._height, other._torus);
 

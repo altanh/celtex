@@ -7,6 +7,7 @@
 #include "Grid.h"
 #include "Updater.h"
 #include "Pattern.h"
+#include "Texture.h"
 
 class Automaton {
  public:
@@ -15,13 +16,17 @@ class Automaton {
   const Grid &getGrid() const;
   Grid &getGrid();
 
+  const Texture &getTexture() const;
+
   void putPattern(int32_t x, int32_t y, const Pattern &p);
 
   void step();
 
  private:
   Grid _grid;
+  Grid _dest;  // optimization for updating
   std::shared_ptr<Updater> _updater;
+  Texture _texture;
 };
 
 #endif
