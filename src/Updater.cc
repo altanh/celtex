@@ -17,14 +17,15 @@ void Updater::update(Grid *grid, Grid *dest) {
     uint32_t h = (i == _threads - 1) ?
         chunk_height + chunk_remainder : chunk_height;
 
-    threads.emplace_back(updateChunk, this, grid, dest, 0, y, dest->getWidth(), h);
+    threads.emplace_back(&Updater::updateChunk, this, 
+        grid, dest, 0, y, dest->getWidth(), h);
   }
 
   for (auto &t : threads)
     t.join();
 }
 
-uint8_t GenGOL::_aliveCount(std::vector<const Cell*> adj) {
+static uint8_t _aliveCount(std::vector<const Cell*> adj) {
   uint8_t count = 0;
 
   for(size_t i = 0; i < 8; ++i) {
@@ -63,12 +64,41 @@ void StochasticGOL::updateChunk(Grid *grid, Grid *dest,
   }
 }
 
-uint8_t StochasticGOL::_aliveCount(std::vector<const Cell*> adj) {
-  uint8_t count = 0;
+static bool _notAdj(std::vector<const Cell*> adj) {
+  std::vector<size_t> locs(2, 0);
 
-  for(size_t i = 0; i < 8; ++i) {
-    count += adj[i] ? (adj[i]->state ? 1 : 0) : 0;
+  // should only have 2
+  for (size_t i = 0; i < adj.size(); ++i) {
+    if (adj[i]->state)
+      locs.push_back(i);
   }
 
-  return count;
+  size_t x = locs[0], y = locs[1];
+
+  return !(x == 0 && y == 1) && !(x == 0 && y == 3)
+      && !(x == 1 && y == 2)
+      && !(x == 2 && y == 4)
+      && !(x == 3 && y == 5)
+      && !(x == 4 && y == 7)
+      && !(x == 5 && y == 6)
+      && !(x == 6 && y == 7);
+}
+
+void JustFriends::updateChunk(Grid *grid, Grid *dest, 
+    uint32_t x, uint32_t y, uint32_t w, uint32_t h) {
+  for (size_t v = y; v < y + h; ++v) {
+    for (size_t u = x; u < x + w; ++u) {
+      std::vector<const Cell*> neighbors = grid->getAdjacent(u, v);
+      uint8_t alive_count = _aliveCount(neighbors);
+      const Cell &c = grid->getCell(u, v);
+
+      if (c.state) {
+        dest->setCell(u, v, { alive_count == 1 || alive_count == 2 });
+      } else if (alive_count != 2) {
+        dest->setCell(u, v, { false });
+      } else {
+        dest->setCell(u, v, { _notAdj(neighbors) });
+      }
+    }
+  }
 }

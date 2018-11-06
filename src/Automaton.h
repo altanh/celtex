@@ -12,6 +12,7 @@
 class Automaton {
  public:
   Automaton(uint32_t w, uint32_t h, bool torus, std::shared_ptr<Updater> u);
+  ~Automaton();
 
   const Grid &getGrid() const;
   Grid &getGrid();
@@ -23,8 +24,8 @@ class Automaton {
   void step();
 
  private:
-  Grid _grid;
-  Grid _dest;  // optimization for updating
+  Grid *_front;
+  Grid *_back;  // optimization for updating
   std::shared_ptr<Updater> _updater;
   Texture _texture;
 };

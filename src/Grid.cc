@@ -3,8 +3,8 @@
 
 #include "Grid.h"
 
-// from a comment by Christ Nolet on stackoverflow; assume b > 0
-static inline _mod(int64_t a, int64_t b) {
+// from a comment by Chris Nolet on stackoverflow; assume b > 0
+static inline int64_t _mod(int64_t a, int64_t b) {
   return (a < 0) ? (a % b + b) : (a % b);
 }
 

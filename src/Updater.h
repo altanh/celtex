@@ -46,8 +46,6 @@ class GenGOL : public Updater {
  private:
   uint16_t _B;
   uint16_t _S;
-
-  static uint8_t _aliveCount(std::vector<const Cell*> adj);
 };
 
 class StochasticGOL : public Updater {
@@ -66,8 +64,15 @@ class StochasticGOL : public Updater {
   std::default_random_engine _rand;
   std::vector<double> _pB;
   std::vector<double> _pS;
+};
 
-  static uint8_t _aliveCount(std::vector<const Cell*> adj);
+class JustFriends : public Updater {
+ public:
+  JustFriends() : Updater() {}
+  JustFriends(size_t thr) : Updater(thr) {}
+
+  virtual void updateChunk(Grid *grid, Grid *dest,
+      uint32_t x, uint32_t y, uint32_t w, uint32_t h);
 };
 
 #endif
